@@ -1,15 +1,16 @@
 import sys
-import time
 import json
 import urllib
+import pytz
 import requests
 from http.server import HTTPServer, BaseHTTPRequestHandler
-from datetime import datetime
+from datetime import datetime, time
 from bs4 import BeautifulSoup
 
 SERVE_HOST = '0.0.0.0'
 SERVE_PORT = 8000
 PREDISTRIBUCE_URL = 'https://www.predistribuce.cz/com/PREdi/UI/Forms/Hdo/HdoForm:hdoOneDayAjax'
+TZ = pytz.timezone('Europe/Berlin')
 
 def get_hdo_html(date, povel):
     response = requests.post(PREDISTRIBUCE_URL, data={"datum": date, "povel": povel})
@@ -40,7 +41,11 @@ def parse_hdo_data(html):
         elif item['class'] == ['hdovt']:
             lastItemTariff = 'high'
 
-    nowTime = datetime.now().time()
+    # Fix bad last 00:00:00 time
+    if timeline[len(timeline) - 1]['end'] == time(0,0,0):
+        timeline[len(timeline) - 1]['end'] = time(23,59,59)
+
+    nowTime = datetime.now(TZ).time()
     for idx, item in enumerate(timeline):
         if nowTime >= item['begin'] and nowTime <= item['end']:
             return {
@@ -48,6 +53,12 @@ def parse_hdo_data(html):
                 'next': timeline[(idx + 1) % len(timeline)],
                 'timeline': timeline
             }
+    
+    return {
+        'current': timeline[len(timeline) - 1],
+        'next': None,
+        'timeline': timeline
+    }
         
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -59,12 +70,14 @@ class handler(BaseHTTPRequestHandler):
 
         povel = query['povel'][0]
 
-        today = time.strftime("%d.%m.%Y")
+        today = datetime.now().strftime("%d.%m.%Y")
         hdo_data = parse_hdo_data(get_hdo_html(today, povel))
 
         self.send_response(200)
         self.send_header("Content-type", "application/json")
         self.end_headers()
 
-        self.wfile.write(json.dumps(hdo_data, default=str).encode('utf8'))
+        convert_time = lambda x: x.strftime("%H:%M")
+
+        self.wfile.write(json.dumps(hdo_data, default=convert_time).encode('utf8'))
         return
