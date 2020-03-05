@@ -51,7 +51,7 @@ def parse_hdo_data(html):
                 'timeline': timeline
             }
         
-class RequestHandler(BaseHTTPRequestHandler):
+class handler(BaseHTTPRequestHandler):
     def do_GET(self):
         parsedurl = urllib.parse.urlparse(self.path)
         query = urllib.parse.parse_qs(parsedurl.query)
@@ -69,11 +69,4 @@ class RequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
         self.wfile.write(json.dumps(hdo_data, default=str).encode('utf8'))
-
-def serve():
-    server_address = (SERVE_HOST, SERVE_PORT)
-    httpd = HTTPServer(server_address, RequestHandler)
-    httpd.serve_forever()
-
-print('Serving on {}:{}...'.format(SERVE_HOST, SERVE_PORT))
-serve()
+        return
