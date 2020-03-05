@@ -1,7 +1,3 @@
 {
-    "name": "predistribuce-hdo",
-    "version": 1,
-    "builds": [
-        { "src": "*.py", "use": "@now/python" }
-    ]
+    "version": 2
 }

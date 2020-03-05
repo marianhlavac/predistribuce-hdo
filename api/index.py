@@ -1,10 +1,8 @@
-#!/usr/bin/env python3
-
-import requests
 import sys
 import time
 import json
 import urllib
+import requests
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from datetime import datetime
 from bs4 import BeautifulSoup
