@@ -65,6 +65,7 @@ class handler(BaseHTTPRequestHandler):
         parsedurl = urllib.parse.urlparse(self.path)
         query = urllib.parse.parse_qs(parsedurl.query)
         
+        tts = 'tts' in query
         if not 'povel' in query:
             raise RuntimeError('Povel not specified')
 
@@ -77,7 +78,8 @@ class handler(BaseHTTPRequestHandler):
         self.send_header("Content-type", "application/json")
         self.end_headers()
 
-        convert_time = lambda x: x.strftime("%H:%M")
+        convert_time = lambda x: "midnight" if tts and x == time(0,0) else \
+            x.strftime("%-H:%M")
 
         self.wfile.write(json.dumps(hdo_data, default=convert_time).encode('utf8'))
         return
